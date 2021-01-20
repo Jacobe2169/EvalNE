@@ -18,6 +18,7 @@ import random
 
 import networkx as nx
 import numpy as np
+import pandas as pd
 
 __all__ = ['common_neighbours',
            'jaccard_coefficient',
@@ -29,7 +30,9 @@ __all__ = ['common_neighbours',
            'preferential_attachment',
            'random_prediction',
            'all_baselines',
-           'stochastic_block_model']
+           'stochastic_block_model',
+           "stochastic_block_model_edge_probs",
+           "stochastic_block_model_degree_corrected"]
 
 from graph_tool.inference import minimize_nested_blockmodel_dl, mcmc_equilibrate, minimize_blockmodel_dl
 
@@ -701,7 +704,7 @@ def all_baselines(G, ebunch=None, neighbourhood='in'):
     return emb
 
 
-def stochastic_block_model(G,ebunch=None, neighbourhood='in'):
+def stochastic_block_model_edge_probs(G,ebunch=None, neighbourhood='in'):
 
     def compute_probs(G):
         g= nx2gt(G)
@@ -721,9 +724,57 @@ def stochastic_block_model(G,ebunch=None, neighbourhood='in'):
         return mapping_, probs
 
     mapping_,probabilities = compute_probs(G)
-    print(mapping_,probabilities)
 
     def predict(u,v):
         return probabilities[mapping_[u]][mapping_[v]]
 
     return _apply_prediction(G,predict,ebunch)
+
+def get_block(G,B_min=2,degree_corrected=False):
+    mapping_={}
+    g = nx2gt(G)
+    for ix,n1 in enumerate(list(g.vertices())):
+        index_ = n1.__int__()
+        mapping_[int(g.vertex_properties["id"][index_])] = ix
+    state = minimize_blockmodel_dl(g,B_min=B_min,degree_corrected=degree_corrected)
+    for node in mapping_:
+        G.nodes[node]["block"] = state.get_blocks()[mapping_[node]]
+    return G
+
+
+def stochastic_block_model_degree_corrected(G,ebunch=None, neighbourhood='in'):
+    G = get_block(G,degree_corrected=True)
+    edge_df = pd.DataFrame(list(G.edges()), columns="u v".split())
+    edge_df["com_u"] = edge_df.u.apply(lambda x: G.nodes[x]["block"])
+    edge_df["com_v"] = edge_df.v.apply(lambda x: G.nodes[x]["block"])
+
+
+    def predict(u,v):
+        com_u, com_v = G.nodes[u]["block"], G.nodes[v]["block"]
+        sum_deg_node_u_group = sum([G.degree(data[0]) for data in G.nodes(data=True) if data[1]["block"] == com_u])
+        sum_deg_node_v_group = sum([G.degree(data[0]) for data in G.nodes(data=True) if data[1]["block"] == com_v])
+        edge_btw = len(edge_df[(edge_df.com_u == com_u) & (edge_df.com_v == com_v)])
+
+        score = (G.degree(u) / sum_deg_node_u_group) * (G.degree(v) / sum_deg_node_v_group) * edge_btw
+        return score
+
+    return _apply_prediction(G,predict,ebunch)
+
+
+def stochastic_block_model(G, ebunch=None, neighbourhood='in'):
+    G = get_block(G)
+    edge_df = pd.DataFrame(list(G.edges()), columns="u v".split())
+    edge_df["com_u"] = edge_df.u.apply(lambda x: G.nodes[x]["block"])
+    edge_df["com_v"] = edge_df.v.apply(lambda x: G.nodes[x]["block"])
+
+
+    def predict(u,v):
+        com_u, com_v = G.nodes[u]["block"], G.nodes[v]["block"]
+        edge_btw = len(edge_df[(edge_df.com_u == com_u) & (edge_df.com_v == com_v)])
+        all_edge_possible = len(edge_df[edge_df.com_u == com_u]) * len(edge_df[edge_df.com_v == com_v])
+        score = edge_btw / all_edge_possible
+        return score
+
+    return _apply_prediction(G,predict,ebunch)
+
+
