@@ -24,7 +24,7 @@ setup(
     author="Alexandru Mara",
     author_email='alexandru.mara@ugent.be',
     description="Open Source Network Embedding Evaluation toolkit",
-    long_description=open("evalne/README.md").read(),
+    long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     keywords='evaluation embedding link-prediction sign-prediction node-classification network-reconstruction '
              'networks graphs visualization',
