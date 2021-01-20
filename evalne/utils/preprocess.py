@@ -406,45 +406,39 @@ def read_train_test(input_path, split):
 #                  Preprocess                    #
 ##################################################
 
-
 def prep_graph(G, relabel=True, del_self_loops=True, maincc=True):
-    """
-    Preprocess a graph according to the input parameters.
+    r"""
+    Preprocess a graphs according to the parameters provided.
+    By default the (digraphs) graphs are restricted to their main (weakly) connected component.
+    Trying to embed graphs with several CCs may cause some algorithms to put them infinitely far away.
 
     Parameters
     ----------
     G : graph
-        A NetworkX graph or digraph.
+        A NetworkX graph
     relabel : bool, optional
-        Determines if the nodes should be relabeled with consecutive integers 0...N. Default is True.
+        Determines if the nodes are relabeled with consecutive integers 0..N
     del_self_loops : bool, optional
-        Determines if self loops should be deleted. Default is True.
+        Determines if self loops should be deleted from the graph. Default is True.
     maincc : bool, optional
-        Determines if the graphs (digraphs) should be restricted to the main (weakly) connected component or not.
-        Default is True.
+        Determines if the graphs should be restricted to the main connected component or not. Default is True.
 
     Returns
     -------
     G : graph
-       A preprocessed NetworkX graph or digraph.
+       A preprocessed NetworkX graph
     Ids : list of tuples
        A list of (OldNodeID, NewNodeID). Returns None if relabel=False.
-
-    Notes
-    -----
-    For some methods trying to embed graphs with several connected components might result in inconsistent behaviours.
-    This is the main reason for setting maincc=True.
     """
     # Remove self loops
     if del_self_loops:
-        G.remove_edges_from(G.selfloop_edges())
+        G.remove_edges_from(nx.selfloop_edges(G))
 
     # Restrict graph to its main connected component
-    if maincc:
-        if G.is_directed():
-            Gcc = max(nx.weakly_connected_component_subgraphs(G), key=len)
-        else:
-            Gcc = max(nx.connected_component_subgraphs(G), key=len)
+    if maincc and not G.is_directed():
+        Gcc = max((G.subgraph(c) for c in nx.connected_components(G)), key=len)
+    elif maincc and G.is_directed():
+        Gcc = max((G.subgraph(c) for c in nx.weakly_connected_components(G)), key=len)
     else:
         Gcc = G
 

@@ -22,7 +22,7 @@ from scipy.sparse import csr_matrix
 from scipy.sparse import tril
 from scipy.sparse import triu
 from scipy.sparse.csgraph import depth_first_tree
-from sklearn.externals.joblib import Parallel, delayed
+from joblib import Parallel, delayed
 
 from evalne.utils import preprocess as pp
 

@@ -76,7 +76,7 @@ def run_test():
     np.random.seed(42)
 
     # Set some variables
-    filename = "./data/network.edgelist"
+    filename = "../evalne/tests/data/network.edgelist"
     directed = False
 
     # Load the test graph

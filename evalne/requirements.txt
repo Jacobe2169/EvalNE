@@ -1,9 +1,0 @@
-numpy
-scipy
-networkx
-scikit-learn
-tqdm
-pyparsing==2.4.7
-pandas
-matplotlib
-joblib

@@ -17,8 +17,8 @@ from evalne.utils import split_train_test as stt
 
 def test():
     # Variables
-    dataset_path = "./data/"
-    output_path = "./data/"
+    dataset_path = "../evalne/tests/data/"
+    output_path = "../evalne/tests/data/"
     test_name = "network.edgelist"
 
     # Load a graph
@@ -59,8 +59,8 @@ def test():
 
 def test_split():
     # Variables
-    dataset_path = "./data/"
-    output_path = "./data/"
+    dataset_path = "../evalne/tests/data/"
+    output_path = "../evalne/tests/data/"
     test_name = "network.edgelist"
     subgraph_size = 400
     train_frac = 0.5

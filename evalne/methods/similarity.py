@@ -28,7 +28,12 @@ __all__ = ['common_neighbours',
            'resource_allocation_index',
            'preferential_attachment',
            'random_prediction',
-           'all_baselines']
+           'all_baselines',
+           'stochastic_block_model']
+
+from graph_tool.inference import minimize_nested_blockmodel_dl, mcmc_equilibrate, minimize_blockmodel_dl
+
+from evalne.methods.helpers import nx2gt
 
 
 def _apply_prediction(G, func, ebunch=None):
@@ -694,3 +699,31 @@ def all_baselines(G, ebunch=None, neighbourhood='in'):
         emb[i][3] = resource_allocation_index(G, [ebunch[i]], neighbourhood)[0]
         emb[i][4] = preferential_attachment(G, [ebunch[i]], neighbourhood)[0]
     return emb
+
+
+def stochastic_block_model(G,ebunch=None, neighbourhood='in'):
+
+    def compute_probs(G):
+        g= nx2gt(G)
+        state = minimize_blockmodel_dl(g, deg_corr=True)
+        M = len(list(G.nodes()))
+        iter_nb = 100
+        probs = np.zeros((M,M))
+        mapping_ = {}
+        for ix,n1 in enumerate(list(g.vertices())):
+            index_ = n1.__int__()
+            mapping_[int(g.vertex_properties["id"][index_])] = ix
+            for iy, n2 in enumerate(list(g.vertices())):
+                probs[ix][iy] = state.get_edges_prob([(n1,n2)], entropy_args=dict(partition_dl=False))
+
+        p_sum = probs.mean() + np.log(2)
+        probs = probs - p_sum
+        return mapping_, probs
+
+    mapping_,probabilities = compute_probs(G)
+    print(mapping_,probabilities)
+
+    def predict(u,v):
+        return probabilities[mapping_[u]][mapping_[v]]
+
+    return _apply_prediction(G,predict,ebunch)
