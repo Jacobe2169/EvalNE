@@ -705,6 +705,23 @@ def all_baselines(G, ebunch=None, neighbourhood='in'):
 
 
 def stochastic_block_model_edge_probs(G,ebunch=None, neighbourhood='in'):
+    """
+    Use probabilities from graph-tool infered stochastic block model as similarity.
+    Parameters
+    ----------
+    G : nx.Graph
+        A Networkx graph or digraph
+    ebunch : iterable, optional
+        An iterable of node pairs. If None, all edges in G will be used. Default is None.
+    neighbourhood : string, optional
+        For directed graphs only. Determines if the in or the out-neighbourhood of nodes should be used.
+        Default is 'in'.
+
+    Returns
+    -------
+    sim : list
+        A list of node-pair similarities in the same order as ebunch.
+    """
 
     def compute_probs(G):
         g= nx2gt(G)
@@ -731,6 +748,21 @@ def stochastic_block_model_edge_probs(G,ebunch=None, neighbourhood='in'):
     return _apply_prediction(G,predict,ebunch)
 
 def get_block(G,B_min=2,degree_corrected=False):
+    """
+    Use graph-tool to detect blocks in a graph
+    Parameters
+    ----------
+    G : nx.Graph
+    B_min : int
+        minimum number of blocks
+    degree_corrected : bool
+        is degree corrected or not
+
+    Returns
+    -------
+    nx.Graph
+        networkX Graph with a block id attribute for each node.
+    """
     mapping_={}
     g = nx2gt(G)
     for ix,n1 in enumerate(list(g.vertices())):
@@ -743,6 +775,27 @@ def get_block(G,B_min=2,degree_corrected=False):
 
 
 def stochastic_block_model_degree_corrected(G,ebunch=None, neighbourhood='in'):
+    """
+    Using graph-tool block inference, compute the probability between nodes using the score SBM-DC proposed in :
+    "Evaluating Overfit and Underfit in Models of Network Community Structure", Amir Ghasemian, Homa Hosseinmardi and Aaron Clauset
+
+    Parameters
+    ----------
+    ----------
+    G : nx.Graph
+        A Networkx graph or digraph
+    ebunch : iterable, optional
+        An iterable of node pairs. If None, all edges in G will be used. Default is None.
+    neighbourhood : string, optional
+        For directed graphs only. Determines if the in or the out-neighbourhood of nodes should be used.
+        Default is 'in'.
+
+    Returns
+    -------
+    sim : list
+        A list of node-pair similarities in the same order as ebunch.
+
+    """
     G = get_block(G,degree_corrected=True)
     edge_df = pd.DataFrame(list(G.edges()), columns="u v".split())
     edge_df["com_u"] = edge_df.u.apply(lambda x: G.nodes[x]["block"])
@@ -762,6 +815,24 @@ def stochastic_block_model_degree_corrected(G,ebunch=None, neighbourhood='in'):
 
 
 def stochastic_block_model(G, ebunch=None, neighbourhood='in'):
+    """
+    Using graph-tool block inference, compute the probability between nodes using the score SBM proposed in :
+    "Evaluating Overfit and Underfit in Models of Network Community Structure", Amir Ghasemian, Homa Hosseinmardi and Aaron Clauset
+    Parameters
+    ----------
+    G : nx.Graph
+        A Networkx graph or digraph
+    ebunch : iterable, optional
+        An iterable of node pairs. If None, all edges in G will be used. Default is None.
+    neighbourhood : string, optional
+        For directed graphs only. Determines if the in or the out-neighbourhood of nodes should be used.
+        Default is 'in'.
+
+    Returns
+    -------
+    sim : list
+        A list of node-pair similarities in the same order as ebunch.
+    """
     G = get_block(G)
     edge_df = pd.DataFrame(list(G.edges()), columns="u v".split())
     edge_df["com_u"] = edge_df.u.apply(lambda x: G.nodes[x]["block"])
