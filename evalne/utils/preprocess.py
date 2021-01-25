@@ -491,7 +491,7 @@ def relabel_nodes(train_E, test_E, directed):
 
     # Save the mapping and relabel the graph
     mapping = dict(zip(H.nodes(), range(len(H.nodes()))))
-    nx.relabel_nodes(H, mapping, copy=False)
+    H = nx.relabel_nodes(H, mapping, copy=True)
 
     # Generate the new train set
     tr_E = set()

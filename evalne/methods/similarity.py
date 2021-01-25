@@ -727,7 +727,6 @@ def stochastic_block_model_edge_probs(G,ebunch=None, neighbourhood='in'):
         g= nx2gt(G)
         state = minimize_blockmodel_dl(g, deg_corr=True)
         M = len(list(G.nodes()))
-        iter_nb = 100
         probs = np.zeros((M,M))
         mapping_ = {}
         for ix,n1 in enumerate(list(g.vertices())):
@@ -768,7 +767,7 @@ def get_block(G,B_min=2,degree_corrected=False):
     for ix,n1 in enumerate(list(g.vertices())):
         index_ = n1.__int__()
         mapping_[int(g.vertex_properties["id"][index_])] = ix
-    state = minimize_blockmodel_dl(g,B_min=B_min,degree_corrected=degree_corrected)
+    state = minimize_blockmodel_dl(g,B_min=B_min,deg_corr=degree_corrected)
     for node in mapping_:
         G.nodes[node]["block"] = state.get_blocks()[mapping_[node]]
     return G
@@ -843,7 +842,7 @@ def stochastic_block_model(G, ebunch=None, neighbourhood='in'):
         com_u, com_v = G.nodes[u]["block"], G.nodes[v]["block"]
         edge_btw = len(edge_df[(edge_df.com_u == com_u) & (edge_df.com_v == com_v)])
         all_edge_possible = len(edge_df[edge_df.com_u == com_u]) * len(edge_df[edge_df.com_v == com_v])
-        score = edge_btw / all_edge_possible
+        score = edge_btw+1 / all_edge_possible+2
         return score
 
     return _apply_prediction(G,predict,ebunch)

@@ -35,7 +35,7 @@ setup(
     install_requires=[
         'numpy',
         'scikit-learn',
-        'networkx',
+        'networkx==2.3',
         'scipy',
         'matplotlib',
         'pandas',
