@@ -842,7 +842,7 @@ def stochastic_block_model(G, ebunch=None, neighbourhood='in'):
         com_u, com_v = G.nodes[u]["block"], G.nodes[v]["block"]
         edge_btw = len(edge_df[(edge_df.com_u == com_u) & (edge_df.com_v == com_v)])
         all_edge_possible = len(edge_df[edge_df.com_u == com_u]) * len(edge_df[edge_df.com_v == com_v])
-        score = edge_btw+1 / all_edge_possible+2
+        score = (edge_btw+1)/ (all_edge_possible+2)
         return score
 
     return _apply_prediction(G,predict,ebunch)
