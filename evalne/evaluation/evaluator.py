@@ -13,6 +13,7 @@ import logging
 import os
 import re
 import time
+import uuid
 
 import networkx as nx
 import numpy as np
@@ -678,8 +679,9 @@ class LPEvaluator(object):
             A list of results, one for each node-pair embedding method set.
         """
         # Create temporal files with in/out data for method
-        tmpedg = './edgelist.tmp'
-        tmpemb = './emb.tmp'
+        key = uuid.uuid4()
+        tmpedg = './edgelist{0}.tmp'.format(key)
+        tmpemb = './emb{0}.tmp'.format(key)
 
         # Write the train data to a file
         data_split.save_tr_graph(tmpedg, delimiter=input_delim, write_stats=False,
@@ -696,8 +698,8 @@ class LPEvaluator(object):
             util.run(command, timeout, verbose)
 
             # Some methods append a .txt filetype to the outfile if its the case, read the txt
-            if os.path.isfile('./emb.tmp.txt'):
-                tmpemb = './emb.tmp.txt'
+            if os.path.isfile(tmpemb+'.txt'):
+                tmpemb = tmpemb+'.txt'
 
             # Read embeddings from output file
             X = pp.read_node_embeddings(tmpemb, data_split.TG.nodes, self.dim, output_delim, method_name)
@@ -719,8 +721,8 @@ class LPEvaluator(object):
                 os.remove(tmpedg)
             if os.path.isfile(tmpemb):
                 os.remove(tmpemb)
-            if os.path.isfile('./emb.tmp.txt'):
-                os.remove('./emb.tmp.txt')
+            if os.path.isfile(tmpemb):
+                os.remove(tmpemb)
 
     def _evaluate_ee_e2e_cmd(self, data_split, method_name, method_type, command, input_delim, output_delim,
                              write_weights, write_dir, timeout, verbose):
@@ -738,11 +740,12 @@ class LPEvaluator(object):
             It returns a list for consistency with self._evaluate_ne_cmd()
         """
         # Create temporal files with in/out data for method
-        tmpedg = './edgelist.tmp'
-        tmp_tr_e = './tmp_tr_e.tmp'
-        tmp_te_e = './tmp_te_e.tmp'
-        tmp_tr_out = './tmp_tr_out.tmp'
-        tmp_te_out = './tmp_te_out.tmp'
+        key = uuid.uuid4()
+        tmpedg = './edgelist{0}.tmp'.format(key)
+        tmp_tr_e = './tmp_tr_e{0}.tmp'.format(key)
+        tmp_te_e = './tmp_te_e{0}.tmp'.format(key)
+        tmp_tr_out = './tmp_tr_out{0}.tmp'.format(key)
+        tmp_te_out = './tmp_te_out{0}.tmp'.format(key)
 
         # Check the amount of placeholders.
         # If 4 we assume: nw, tr_e, tr_out, dim
@@ -2000,8 +2003,9 @@ class NCEvaluator(object):
             The keys are of type string and the values of type array.
         """
         # Create temporal files with in/out data for method
-        tmpedg = './edgelist.tmp'
-        tmpemb = './emb.tmp'
+        key = uuid.uuid4()
+        tmpedg = './edgelist{0}.tmp'.format(key)
+        tmpemb = './emb{0}.tmp'.format(key)
 
         # Write the graph to a file
         pp.save_graph(self.G, output_path=tmpedg, delimiter=input_delim, write_stats=False,
@@ -2018,8 +2022,8 @@ class NCEvaluator(object):
             util.run(command, timeout, verbose)
 
             # Some methods append a .txt filetype to the outfile if its the case, read the txt
-            if os.path.isfile('./emb.tmp.txt'):
-                tmpemb = './emb.tmp.txt'
+            if os.path.isfile(tmpemb+'.txt'):
+                tmpemb = tmpemb+'.txt'
 
             # Read embeddings from output file
             X = pp.read_node_embeddings(tmpemb, list(self.G.nodes()), self.dim, output_delim, method_name)
@@ -2038,8 +2042,8 @@ class NCEvaluator(object):
                 os.remove(tmpedg)
             if os.path.isfile(tmpemb):
                 os.remove(tmpemb)
-            if os.path.isfile('./emb.tmp.txt'):
-                os.remove('./emb.tmp.txt')
+            if os.path.isfile(tmpemb):
+                os.remove(tmpemb)
 
     def evaluate_ne(self, X, method_name, params=None):
         """
