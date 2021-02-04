@@ -35,6 +35,7 @@ __all__ = ['common_neighbours',
            "stochastic_block_model_degree_corrected"]
 
 from graph_tool.inference import minimize_nested_blockmodel_dl, mcmc_equilibrate, minimize_blockmodel_dl
+from haversine import haversine
 
 from evalne.methods.helpers import nx2gt
 
@@ -848,3 +849,52 @@ def stochastic_block_model(G, ebunch=None, neighbourhood='in'):
     return _apply_prediction(G,predict,ebunch)
 
 
+def spatial_link_prediction(G, ebunch=None, neighbourhood='in'):
+    """
+    Computes the common neighbours similarity between all node pairs in ebunch; or all nodes in G, if ebunch is None.
+    Can be computed for directed and undirected graphs (see Notes for exact definitions).
+
+    Parameters
+    ----------
+    G : graph
+        A NetworkX graph or digraph.
+    ebunch : iterable, optional
+        An iterable of node pairs. If None, all edges in G will be used. Default is None.
+    neighbourhood : string, optional
+        For directed graphs only. Determines if the in or the out-neighbourhood of nodes should be used.
+        Default is 'in'.
+
+    Returns
+    -------
+    sim : list
+        A list of node-pair similarities in the same order as ebunch.
+
+    Raises
+    ------
+    ValueError
+        If G is directed and neighbourhood is not one of 'in' or 'out'.
+    """
+    def foo(x):
+        return [eval(f) for f in re.findall("\d+.\d+", x)]
+    is_pos=True
+    print(G.nodes(data=True))
+    for n in list(G.nodes()):
+        if not "pos" in G.nodes[n]:
+            is_pos=False
+            break
+    if is_pos:
+        import re
+        for node in list(G.nodes()):
+            G.nodes[node]["pos"] = foo(G.nodes[node]["pos"])
+    paths = None
+    if not is_pos:
+        paths = dict(nx.all_pairs_shortest_path_length(G))
+
+    def predict(u, v):
+        if is_pos:
+            print(1)
+            return 1/(haversine(G.nodes[u]["pos"],G.nodes[v]["pos"]))**2
+        else:
+            return 1/(paths[u][v])**2
+
+    return _apply_prediction(G, predict, ebunch)
