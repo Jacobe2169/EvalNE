@@ -14,6 +14,7 @@ from __future__ import print_function
 import os
 import collections
 import logging
+from copy import copy
 
 import networkx as nx
 import numpy as np
@@ -430,6 +431,7 @@ def prep_graph(G, relabel=True, del_self_loops=True, maincc=True):
     Ids : list of tuples
        A list of (OldNodeID, NewNodeID). Returns None if relabel=False.
     """
+
     # Remove self loops
     if del_self_loops:
         G.remove_edges_from(nx.selfloop_edges(G))
@@ -452,7 +454,7 @@ def prep_graph(G, relabel=True, del_self_loops=True, maincc=True):
         return Gcc, None
 
 
-def relabel_nodes(train_E, test_E, directed):
+def relabel_nodes(train_E, test_E, directed,G):
     """
     For given sets of train and test edges, the method returns relabeled sets with nodes being integers in 0...N.
     Additionally, the method returns a graph containing all edges in the train and test and nodes in 0...N.
@@ -488,6 +490,9 @@ def relabel_nodes(train_E, test_E, directed):
     else:
         H = nx.Graph()
         H.add_edges_from(E)
+    print(G.nodes(data=True))
+    for node in list(H.nodes()):
+        H.nodes[node] = copy(G.nodes[node])
 
     # Save the mapping and relabel the graph
     mapping = dict(zip(H.nodes(), range(len(H.nodes()))))
