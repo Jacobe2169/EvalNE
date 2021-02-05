@@ -875,26 +875,30 @@ def spatial_link_prediction(G, ebunch=None, neighbourhood='in'):
         If G is directed and neighbourhood is not one of 'in' or 'out'.
     """
     def foo(x):
-        return [eval(f) for f in re.findall("[-]?\d+.[-]?\d+", x)]
+        return [eval(f) for f in re.findall("[-]?\d+.[-]?[\de+-]+", x)]
+
     is_pos=True
-    print(G.nodes(data=True))
-    for n in list(G.nodes()):
-        if not "pos" in G.nodes[n]:
+    H = G.copy()
+    for n in list(H.nodes()):
+        if not "pos" in H.nodes[n]:
             is_pos=False
             break
     if is_pos:
         import re
         for node in list(G.nodes()):
-            G.nodes[node]["pos"] = foo(G.nodes[node]["pos"])
+            H.nodes[node]["pos"] = foo(H.nodes[node]["pos"])
     paths = None
     if not is_pos:
-        paths = dict(nx.all_pairs_shortest_path_length(G))
+        paths = dict(nx.all_pairs_shortest_path_length(H))
 
     def predict(u, v):
         if is_pos:
-            print(1)
-            return 1/(haversine(G.nodes[u]["pos"],G.nodes[v]["pos"]))**2
+            p1 = H.nodes[u]["pos"]
+            p2 = H.nodes[v]["pos"]
+            p1 = (p1[-1],p1[0])
+            p2 = (p2[-1], p2[0])
+            return 1/((haversine(p1,p2))**2)
         else:
-            return 1/(paths[u][v])**2
+            return 1/1+(paths[u][v])**2
 
-    return _apply_prediction(G, predict, ebunch)
+    return _apply_prediction(H, predict, ebunch)
