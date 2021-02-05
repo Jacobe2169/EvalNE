@@ -897,7 +897,7 @@ def spatial_link_prediction(G, ebunch=None, neighbourhood='in'):
             p2 = H.nodes[v]["pos"]
             p1 = (p1[-1],p1[0])
             p2 = (p2[-1], p2[0])
-            return 1/((haversine(p1,p2))**2)
+            return 1/(1+(haversine(p1,p2))**2)
         else:
             return 1/1+(paths[u][v])**2
 
