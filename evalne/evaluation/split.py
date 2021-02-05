@@ -705,7 +705,7 @@ class LPEvalSplit(BaseEvalSplit):
 
         # Set class attributes to new values
         self.set_splits(train_E, train_E_false, test_E, test_E_false, directed=G.is_directed(), nw_name=nw_name,
-                        split_id=split_id, split_alg=split_alg, owa=owa, verbose=verbose)
+                        split_id=split_id, split_alg=split_alg, owa=owa, verbose=verbose,TG=G)
 
         return train_E, train_E_false, test_E, test_E_false
 
