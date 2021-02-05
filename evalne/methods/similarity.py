@@ -875,7 +875,7 @@ def spatial_link_prediction(G, ebunch=None, neighbourhood='in'):
         If G is directed and neighbourhood is not one of 'in' or 'out'.
     """
     def foo(x):
-        return [eval(f) for f in re.findall("\d+.\d+", x)]
+        return [eval(f) for f in re.findall("[-]?\d+.[-]?\d+", x)]
     is_pos=True
     print(G.nodes(data=True))
     for n in list(G.nodes()):
