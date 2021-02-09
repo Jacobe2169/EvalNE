@@ -707,6 +707,12 @@ class LPEvalSplit(BaseEvalSplit):
         self.set_splits(train_E, train_E_false, test_E, test_E_false, directed=G.is_directed(), nw_name=nw_name,
                         split_id=split_id, split_alg=split_alg, owa=owa, verbose=verbose)
 
+        attr_pos = nx.get_node_attributes(G,"pos")
+        if attr_pos:
+            for node in list(self.TG.nodes()):
+                self.TG.nodes[node]["pos"] = attr_pos[node]
+
+
         return train_E, train_E_false, test_E, test_E_false
 
     def get_parameters(self):

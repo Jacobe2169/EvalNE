@@ -890,14 +890,20 @@ def spatial_link_prediction(G, ebunch=None, neighbourhood='in'):
     if not is_pos:
         paths = dict(nx.all_pairs_shortest_path_length(H))
 
+
+    def dist(x, y): # Euclidean Distance
+        return np.sqrt(np.sum((x - y) ** 2))
+
     def predict(u, v):
         if is_pos:
-            p1 = H.nodes[u]["pos"]
-            p2 = H.nodes[v]["pos"]
-            p1 = (p1[-1],p1[0])
-            p2 = (p2[-1], p2[0])
-            return 1/(1+(haversine(p1,p2))**2)
+            p1 = np.asarray(H.nodes[u]["pos"])
+            p2 = np.asarray(H.nodes[v]["pos"])
+            return (1+int(nx.has_path(H,u,v))/(1+(dist(p1,p2))**4))
         else:
-            return 1/1+(paths[u][v])**2
+            try:
+                return 1/((paths[u][v])**4)
+            except KeyError: # If nodes are not connected in the graph
+                import sys
+                return 1/sys.maxsize
 
     return _apply_prediction(H, predict, ebunch)
