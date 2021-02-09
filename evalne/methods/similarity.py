@@ -851,8 +851,7 @@ def stochastic_block_model(G, ebunch=None, neighbourhood='in'):
 
 def spatial_link_prediction(G, ebunch=None, neighbourhood='in'):
     """
-    Computes the common neighbours similarity between all node pairs in ebunch; or all nodes in G, if ebunch is None.
-    Can be computed for directed and undirected graphs (see Notes for exact definitions).
+    TODO
 
     Parameters
     ----------
