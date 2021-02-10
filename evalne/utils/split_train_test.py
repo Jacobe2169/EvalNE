@@ -342,7 +342,7 @@ def rand_split_train_test(G, train_frac=0.51):
     else:
         H = nx.Graph()
         H.add_edges_from(ptr_edges)
-        maincc = max(nx.connected_component_subgraphs(H), key=len)
+        maincc = max([G.subgraph(c) for c in nx.connected_components(G)], key=len)
 
     # The edges in the mainCC graph are the actual train edges
     train_E = set(maincc.edges)

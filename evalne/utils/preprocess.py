@@ -490,9 +490,9 @@ def relabel_nodes(train_E, test_E, directed,G):
     else:
         H = nx.Graph()
         H.add_edges_from(E)
-    print(G.nodes(data=True))
+    #print(G.nodes(data=True))
     for node in list(H.nodes()):
-        H.nodes[node] = copy(G.nodes[node])
+        H.nodes[node].update(dict(G.nodes[node]))
 
     # Save the mapping and relabel the graph
     mapping = dict(zip(H.nodes(), range(len(H.nodes()))))
