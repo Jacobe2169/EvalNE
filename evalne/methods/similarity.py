@@ -898,7 +898,7 @@ def spatial_link_prediction(G, ebunch=None, neighbourhood='in'):
         if is_pos:
             p1 = np.asarray(H.nodes[u]["pos"])
             p2 = np.asarray(H.nodes[v]["pos"])
-            return (1+int(nx.has_path(H,u,v))/(1+(dist(p1,p2))**4))
+            return (1/(1+(dist(p1,p2))**4))
         else:
             try:
                 return 1/((paths[u][v])**4)
