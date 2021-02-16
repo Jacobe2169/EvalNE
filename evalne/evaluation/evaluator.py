@@ -479,7 +479,7 @@ class LPEvaluator(object):
 
         # Check if tuning parameters is needed
         if tune_params is not None:
-            print('Tuning parameters for {} ...'.format(method_name))
+            if verbose:print('Tuning parameters for {} ...'.format(method_name))
 
             # Variable to store the best results and parameters for each ee_method
             best_results = list()
@@ -690,8 +690,9 @@ class LPEvaluator(object):
         # Add the input, output and embedding dimensionality to the command
         command = command.format(tmpedg, tmpemb, self.dim)
 
-        print('Running command...')
-        print(command)
+        if verbose:
+            print('Running command...')
+            print(command)
 
         try:
             # Call the method
@@ -783,8 +784,9 @@ class LPEvaluator(object):
                 stt.store_edgelists(tmp_tr_e, tmp_te_e, ebunch, [ebunch[0], ebunch[1]])
                 dummy_edges = 2
 
-        print('Running command...')
-        print(command)
+        if verbose:
+            print('Running command...')
+            print(command)
 
         try:
             # Call the method
@@ -1244,7 +1246,7 @@ class NREvaluator(LPEvaluator):
 
         # Check if tuning parameters is needed
         if tune_params is not None:
-            print('Tuning parameters for {} ...'.format(method_name))
+            if verbose:print('Tuning parameters for {} ...'.format(method_name))
 
             # Variable to store the best results and parameters for each ee_method
             best_results = list()
@@ -1883,7 +1885,7 @@ class NCEvaluator(object):
 
         # Check if tuning parameters is needed
         if tune_params is not None:
-            print('Tuning parameters for {} ...'.format(method_name))
+            if verbose:print('Tuning parameters for {} ...'.format(method_name))
 
             # Variable to store the best results and parameters for each ee_method
             num_sh = len(self.shuffles)
@@ -2013,9 +2015,9 @@ class NCEvaluator(object):
 
         # Add the input, output and embedding dimensionality to the command
         command = command.format(tmpedg, tmpemb, self.dim)
-
-        print('Running command...')
-        print(command)
+        if verbose:
+            print('Running command...')
+            print(command)
 
         try:
             # Call the method
