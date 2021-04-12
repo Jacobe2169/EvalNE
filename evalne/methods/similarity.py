@@ -885,7 +885,10 @@ def spatial_link_prediction(G, ebunch=None, neighbourhood='in'):
     if is_pos:
         import re
         for node in list(G.nodes()):
-            H.nodes[node]["pos"] = foo(H.nodes[node]["pos"])
+            try:
+                H.nodes[node]["pos"] = foo(H.nodes[node]["pos"])
+            except TypeError:
+                pass
     paths = None
     if not is_pos:
         paths = dict(nx.all_pairs_shortest_path_length(H))
