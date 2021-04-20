@@ -768,7 +768,10 @@ def get_block(G,B_min=2,degree_corrected=False):
     for ix,n1 in enumerate(list(g.vertices())):
         index_ = n1.__int__()
         mapping_[int(g.vertex_properties["id"][index_])] = ix
+    import time
+    deb = time.time()
     state = minimize_blockmodel_dl(g,B_min=B_min,deg_corr=degree_corrected)
+
     for node in mapping_:
         G.nodes[node]["block"] = state.get_blocks()[mapping_[node]]
     return G
@@ -833,16 +836,36 @@ def stochastic_block_model(G, ebunch=None, neighbourhood='in'):
     sim : list
         A list of node-pair similarities in the same order as ebunch.
     """
+    import time
+    deb = time.time()
     G = get_block(G)
     edge_df = pd.DataFrame(list(G.edges()), columns="u v".split())
     edge_df["com_u"] = edge_df.u.apply(lambda x: G.nodes[x]["block"])
     edge_df["com_v"] = edge_df.v.apply(lambda x: G.nodes[x]["block"])
+    coms = np.concatenate((edge_df["com_u"].unique(), edge_df["com_v"].unique()))
+    coms = np.unique(coms)
 
+    deb = time.time()
+    edge_btw_len = {}
+    for ix in range(len(coms)):
+        for iy in range(ix,len(coms)):
+            com_u = coms[ix]
+            com_v = coms[iy]
+            edge_btw_len[(ix,iy)] = len(edge_df[(edge_df.com_u == com_u) & (edge_df.com_v == com_v)])
+            edge_btw_len[(iy, ix)] = edge_btw_len[(ix,iy)]
+
+    all_edge_possible_len = {}
+    for ix in range(len(coms)):
+        for iy in range(ix,len(coms)):
+            com_u = coms[ix]
+            com_v = coms[iy]
+            all_edge_possible_len[(ix,iy)] = len(edge_df[edge_df.com_u == com_u]) * len(edge_df[edge_df.com_v == com_v])
+            all_edge_possible_len[(iy, ix)] = all_edge_possible_len[(ix,iy)]
 
     def predict(u,v):
         com_u, com_v = G.nodes[u]["block"], G.nodes[v]["block"]
-        edge_btw = len(edge_df[(edge_df.com_u == com_u) & (edge_df.com_v == com_v)])
-        all_edge_possible = len(edge_df[edge_df.com_u == com_u]) * len(edge_df[edge_df.com_v == com_v])
+        edge_btw = edge_btw_len[(com_u,com_v)] #len(edge_df[(edge_df.com_u == com_u) & (edge_df.com_v == com_v)])
+        all_edge_possible = all_edge_possible_len[(com_u,com_v)] #len(edge_df[edge_df.com_u == com_u]) * len(edge_df[edge_df.com_v == com_v])
         score = (edge_btw+1)/ (all_edge_possible+2)
         return score
 
