@@ -81,6 +81,30 @@ def _eval_sim(q, method, traintest_split, neighbourhood):
         test_pred = func(traintest_split.TG, traintest_split.test_edges, neighbourhood)
     q.put((train_pred, test_pred))
 
+def _eval_sim_no_q( method, traintest_split, neighbourhood):
+    """
+    Helper function that evaluates a heuristic baseline and puts the train and test predictions in a queue object.
+
+    Parameters
+    ----------
+    q : queue
+        An object used to communicate the results of this function to the calling method.
+    method : string
+        A string indicating the name of the method to evaluate.
+    traintest_split : a subclass of BaseEvalSplit
+        A subclass of BaseEvalSplit containing the train graph (a subgraph of the full network that spans all nodes)
+        and a set of train edges and non-edges. Test edges are optional. If not provided only train results will be
+        generated.
+    neighbourhood : string, optional
+        A string indicating the 'in' or 'out' neighbourhood to be used for directed graphs. Default is 'in'.
+    """
+    func = getattr(sim, str(method))
+    train_pred = func(traintest_split.TG, traintest_split.train_edges, neighbourhood)
+    test_pred = None
+    if len(traintest_split.test_edges) != 0:
+        test_pred = func(traintest_split.TG, traintest_split.test_edges, neighbourhood)
+    return train_pred, test_pred
+
 
 class LPEvaluator(object):
     """
@@ -301,8 +325,9 @@ class LPEvaluator(object):
 
         else:
             try:
-                train_pred, test_pred = util.run_function(timeout, _eval_sim,
-                                                          *[method, self.traintest_split, neighbourhood])
+                train_pred, test_pred = _eval_sim_no_q(method,self.traintest_split,neighbourhood)
+                    #util.run_function(timeout, _eval_sim,
+                                                          #*[method, self.traintest_split, neighbourhood])
             except AttributeError:
                 raise AttributeError('Method `{}` is not one of the available baselines!'.format(method))
             except util.TimeoutExpired as e:
