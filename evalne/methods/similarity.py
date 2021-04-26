@@ -705,51 +705,9 @@ def all_baselines(G, ebunch=None, neighbourhood='in'):
     return emb
 
 
-def stochastic_block_model_edge_probs(G,ebunch=None, neighbourhood='in'):
+def infer_sbm(G, B_min=2, degree_corrected=False):
     """
-    Use probabilities from graph-tool infered stochastic block model as similarity.
-    Parameters
-    ----------
-    G : nx.Graph
-        A Networkx graph or digraph
-    ebunch : iterable, optional
-        An iterable of node pairs. If None, all edges in G will be used. Default is None.
-    neighbourhood : string, optional
-        For directed graphs only. Determines if the in or the out-neighbourhood of nodes should be used.
-        Default is 'in'.
-
-    Returns
-    -------
-    sim : list
-        A list of node-pair similarities in the same order as ebunch.
-    """
-
-    def compute_probs(G):
-        g= nx2gt(G)
-        state = minimize_blockmodel_dl(g, deg_corr=True)
-        M = len(list(G.nodes()))
-        probs = np.zeros((M,M))
-        mapping_ = {}
-        for ix,n1 in enumerate(list(g.vertices())):
-            index_ = n1.__int__()
-            mapping_[int(g.vertex_properties["id"][index_])] = ix
-            for iy, n2 in enumerate(list(g.vertices())):
-                probs[ix][iy] = state.get_edges_prob([(n1,n2)], entropy_args=dict(partition_dl=False))
-
-        p_sum = probs.mean() + np.log(2)
-        probs = probs - p_sum
-        return mapping_, probs
-
-    mapping_,probabilities = compute_probs(G)
-
-    def predict(u,v):
-        return probabilities[mapping_[u]][mapping_[v]]
-
-    return _apply_prediction(G,predict,ebunch)
-
-def get_block(G,B_min=2,degree_corrected=False):
-    """
-    Use graph-tool to detect blocks in a graph
+    Use `graph-tool` to infer blocks in a graph.
     Parameters
     ----------
     G : nx.Graph
@@ -768,8 +726,7 @@ def get_block(G,B_min=2,degree_corrected=False):
     for ix,n1 in enumerate(list(g.vertices())):
         index_ = n1.__int__()
         mapping_[int(g.vertex_properties["id"][index_])] = ix
-    import time
-    deb = time.time()
+
     state = minimize_blockmodel_dl(g,B_min=B_min,deg_corr=degree_corrected)
 
     for node in mapping_:
@@ -782,8 +739,12 @@ def stochastic_block_model_degree_corrected(G,ebunch=None, neighbourhood='in'):
     Using graph-tool block inference, compute the probability between nodes using the score SBM-DC proposed in :
     "Evaluating Overfit and Underfit in Models of Network Community Structure", Amir Ghasemian, Homa Hosseinmardi and Aaron Clauset
 
+    :math:`s(i,j) =  \frac{deg(G,i)}{\sum\limits_{k\in g_i} deg(k,G)} \times \frac{deg(G,j)}{\sum\limits_{k\in g_j} deg(k,G)} \times l_{g_i,g_j}`
+
+    where :math:`l_{g_i,g_j}` corresponds to the number of edges with a node in the block :math:`g_i` and a node in the block :math:`g_j`
+    and :math:`deg(G,i)` corresponds to the degree of the nodes i in the graph G.
+
     Parameters
-    ----------
     ----------
     G : nx.Graph
         A Networkx graph or digraph
@@ -799,7 +760,7 @@ def stochastic_block_model_degree_corrected(G,ebunch=None, neighbourhood='in'):
         A list of node-pair similarities in the same order as ebunch.
 
     """
-    G = get_block(G,degree_corrected=True)
+    G = infer_sbm(G, degree_corrected=True)
     edge_df = pd.DataFrame(list(G.edges()), columns="u v".split())
     edge_df["com_u"] = edge_df.u.apply(lambda x: G.nodes[x]["block"])
     edge_df["com_v"] = edge_df.v.apply(lambda x: G.nodes[x]["block"])
@@ -821,6 +782,12 @@ def stochastic_block_model(G, ebunch=None, neighbourhood='in'):
     """
     Using graph-tool block inference, compute the probability between nodes using the score SBM proposed in :
     "Evaluating Overfit and Underfit in Models of Network Community Structure", Amir Ghasemian, Homa Hosseinmardi and Aaron Clauset
+
+    :math:`s(i,j) = \frac{1+l_{g_i,g_j}}{2+r_{g_i,g_j}}`
+
+    where :math:`l_{g_i,g_j}` corresponds to the number of edges with a node in the block :math:`g_i` and a node in the block :math:`g_j`
+    and :math:`r__{g_i,g_j}` corresponds to the number of possible edges between the nodes in the blocks :math:`g_i` and :math:`g_j`
+
     Parameters
     ----------
     G : nx.Graph
@@ -837,15 +804,14 @@ def stochastic_block_model(G, ebunch=None, neighbourhood='in'):
         A list of node-pair similarities in the same order as ebunch.
     """
     import time
-    deb = time.time()
-    G = get_block(G)
+    G = infer_sbm(G)
     edge_df = pd.DataFrame(list(G.edges()), columns="u v".split())
     edge_df["com_u"] = edge_df.u.apply(lambda x: G.nodes[x]["block"])
     edge_df["com_v"] = edge_df.v.apply(lambda x: G.nodes[x]["block"])
     coms = np.concatenate((edge_df["com_u"].unique(), edge_df["com_v"].unique()))
     coms = np.unique(coms)
 
-    deb = time.time()
+    # Compute value used multiple times to speed the prediction process
     edge_btw_len = {}
     for ix in range(len(coms)):
         for iy in range(ix,len(coms)):
@@ -872,9 +838,13 @@ def stochastic_block_model(G, ebunch=None, neighbourhood='in'):
     return _apply_prediction(G,predict,ebunch)
 
 
-def spatial_link_prediction(G, ebunch=None, neighbourhood='in'):
+def spatial_link_prediction(G, ebunch=None, neighbourhood='in',dist_func = lambda x,y:np.linalg.norm(x - y)):
     """
-    TODO
+    Compute the spatial prediction score between pair of nodes from a graph. The deterrence function used is :
+
+        .. math:: \frac{1}{\epsilon+ d(u,v)}
+
+    where d(u,v) is the distance function chosen. This Euclidean distance is set by default
 
     Parameters
     ----------
@@ -885,6 +855,8 @@ def spatial_link_prediction(G, ebunch=None, neighbourhood='in'):
     neighbourhood : string, optional
         For directed graphs only. Determines if the in or the out-neighbourhood of nodes should be used.
         Default is 'in'.
+    dist_func : callable
+        distance function
 
     Returns
     -------
@@ -899,12 +871,15 @@ def spatial_link_prediction(G, ebunch=None, neighbourhood='in'):
     def foo(x):
         return [eval(f) for f in re.findall("[-]?\d+.[-]?[\de+-]+", x)]
 
+    # Check if there is a position attribute in the graph's nodes
     is_pos=True
     H = G.copy()
     for n in list(H.nodes()):
         if not "pos" in H.nodes[n]:
             is_pos=False
             break
+
+    #If a position exists, we parse the position attribute if it's a string
     if is_pos:
         import re
         for node in list(G.nodes()):
@@ -912,22 +887,21 @@ def spatial_link_prediction(G, ebunch=None, neighbourhood='in'):
                 H.nodes[node]["pos"] = foo(H.nodes[node]["pos"])
             except TypeError:
                 pass
+    # If no position found between nodes, the shortest path length is used as distance between nodes
     paths = None
     if not is_pos:
         paths = dict(nx.all_pairs_shortest_path_length(H))
 
-
-    def dist(x, y): # Euclidean Distance
-        return np.sqrt(np.sum((x - y) ** 2))
-
     def predict(u, v):
-        if is_pos:
+        float_epsilon = np.finfo(float).eps # Epsilon value (2.220446049250313e-16)
+        if is_pos: # if the graph have a position attribute
             p1 = np.asarray(H.nodes[u]["pos"])
             p2 = np.asarray(H.nodes[v]["pos"])
-            return (1/(1+(dist(p1,p2))**4))
-        else:
+            return 1/(float_epsilon+(dist_func(p1,p2)**4))
+
+        else: # otherwise
             try:
-                return 1/((paths[u][v])**4)
+                return 1/(float_epsilon+(paths[u][v]**4))
             except KeyError: # If nodes are not connected in the graph
                 import sys
                 return 1/sys.maxsize
