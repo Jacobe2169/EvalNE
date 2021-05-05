@@ -31,8 +31,7 @@ __all__ = ['common_neighbours',
            'random_prediction',
            'all_baselines',
            'stochastic_block_model',
-           "stochastic_block_model_edge_probs",
-           "stochastic_block_model_degree_corrected"]
+           "stochastic_block_model_degree_corrected","spatial_link_prediction"]
 
 from graph_tool.inference import minimize_nested_blockmodel_dl, mcmc_equilibrate, minimize_blockmodel_dl
 from haversine import haversine
@@ -838,7 +837,7 @@ def stochastic_block_model(G, ebunch=None, neighbourhood='in'):
     return _apply_prediction(G,predict,ebunch)
 
 
-def spatial_link_prediction(G, ebunch=None, neighbourhood='in',dist_func = lambda x,y:np.linalg.norm(x - y)):
+def spatial_link_prediction(G, ebunch=None, neighbourhood='in',dist_func = lambda x,y:np.linalg.norm(x - y),exponent=2):
     """
     Compute the spatial prediction score between pair of nodes from a graph. The deterrence function used is :
 
@@ -897,11 +896,11 @@ def spatial_link_prediction(G, ebunch=None, neighbourhood='in',dist_func = lambd
         if is_pos: # if the graph have a position attribute
             p1 = np.asarray(H.nodes[u]["pos"])
             p2 = np.asarray(H.nodes[v]["pos"])
-            return 1/(float_epsilon+(dist_func(p1,p2)**4))
+            return 1/(float_epsilon+(dist_func(p1,p2)**exponent))
 
         else: # otherwise
             try:
-                return 1/(float_epsilon+(paths[u][v]**4))
+                return 1/(float_epsilon+(paths[u][v]**exponent))
             except KeyError: # If nodes are not connected in the graph
                 import sys
                 return 1/sys.maxsize
